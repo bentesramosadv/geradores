@@ -1,5 +1,6 @@
 node_modules/
 dist/
+# assets/ e index.html sao gerados pelo build e commitados intencionalmente
 .env
 .env.local
 .wrangler/

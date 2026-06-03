@@ -33,6 +33,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [allResults, setAllResults] = useState(null)
   const [error, setError] = useState('')
+  const [customPrompt, setCustomPrompt] = useState('')
   const [followUp, setFollowUp] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [history, setHistory] = useState([])
@@ -62,7 +63,9 @@ export default function App() {
     setMessages([])
     setAllResults(null)
 
-    const userContent = `Analise a seguinte peticao:\n\n${text}`
+    const userContent = customPrompt.trim()
+      ? `${customPrompt.trim()}\n\nPeticao para referencia:\n\n${text}`
+      : `Analise a seguinte peticao:\n\n${text}`
 
     if (selectedAgent === 'todos') {
       const initial = {}
@@ -165,6 +168,7 @@ export default function App() {
     setAllResults(null)
     setError('')
     setFollowUp('')
+    setCustomPrompt('')
   }
 
   const hasResults = messages.length > 0 || allResults !== null
@@ -198,6 +202,36 @@ export default function App() {
                   setFileName={setFileName}
                 />
                 <AgentSelector selected={selectedAgent} onSelect={setSelectedAgent} />
+
+                {/* Campo de prompt livre */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                    <div className="w-2 h-2 rounded-full bg-blue-400" />
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Seu Prompt</span>
+                    {customPrompt && (
+                      <button
+                        onClick={() => setCustomPrompt('')}
+                        className="ml-auto text-xs text-slate-400 hover:text-red-400 transition-colors"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    value={customPrompt}
+                    onChange={e => setCustomPrompt(e.target.value)}
+                    placeholder="Digite sua instrucao aqui... Ex: Verifique se ha pedido de tutela de urgencia para suspensao dos descontos. Foque na responsabilidade objetiva do banco pelo fortuito interno."
+                    rows={3}
+                    className="w-full px-4 py-3 text-sm text-slate-700 leading-relaxed resize-none focus:outline-none placeholder:text-slate-400 bg-white"
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAnalyze() }}
+                  />
+                  <div className="px-4 py-1.5 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-xs text-slate-400">
+                      {customPrompt ? 'Sera enviado junto com a peticao como instrucao' : 'Opcional — Ctrl+Enter para analisar'}
+                    </span>
+                    <span className="text-xs text-slate-300">{customPrompt.length}</span>
+                  </div>
+                </div>
 
                 <div className="flex gap-3">
                   <button

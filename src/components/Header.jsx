@@ -1,24 +1,29 @@
-import { Scale } from 'lucide-react'
+import { Scale, History, X } from 'lucide-react'
 
-export default function Header() {
+export default function Header({ sidebarOpen, onToggleSidebar }) {
   return (
-    <header className="bg-blue-950 text-white shadow-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <Scale size={24} className="text-white" />
+    <header className="bg-blue-950 text-white shadow-xl flex-shrink-0">
+      <div className="max-w-full px-4 sm:px-6">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onToggleSidebar}
+              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-blue-800 transition-colors text-blue-300 hover:text-white"
+              title="Historico de analises"
+            >
+              {sidebarOpen ? <X size={18} /> : <History size={18} />}
+            </button>
+            <div className="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center shadow-md flex-shrink-0">
+              <Scale size={18} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Analisador Juridico IA</h1>
-              <p className="text-blue-300 text-sm font-light">
-                Analise inteligente de peticoes com Claude AI
-              </p>
+              <h1 className="text-base font-bold tracking-tight leading-tight">Analisador Juridico IA</h1>
+              <p className="text-blue-400 text-xs font-light hidden sm:block">Powered by Claude Sonnet</p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 bg-blue-900 px-4 py-2 rounded-lg border border-blue-800">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-sm text-blue-200 font-medium">Claude Sonnet</span>
+          <div className="flex items-center gap-2 bg-blue-900 px-3 py-1.5 rounded-lg border border-blue-800">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-xs text-blue-200 font-medium">Online</span>
           </div>
         </div>
       </div>

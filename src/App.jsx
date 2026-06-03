@@ -1,89 +1,260 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Scale } from 'lucide-react'
 import Header from './components/Header'
 import AgentSelector from './components/AgentSelector'
-import TextInput from './components/TextInput'
-import AnalysisResult from './components/AnalysisResult'
+import FileUpload from './components/FileUpload'
+import ConversationView from './components/ConversationView'
+import HistorySidebar from './components/HistorySidebar'
+import FollowUpInput from './components/FollowUpInput'
+
+const ALL_MODES = ['completa', 'fatos', 'fundamentos', 'jurisprudencia', 'pedidos', 'ortografia', 'redacao', 'qa_bancario']
+const HISTORY_KEY = 'juridico_history_v2'
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2)
+}
+
+async function callApi(messages, mode) {
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, mode }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error || 'Erro na API')
+  return data.result
+}
 
 export default function App() {
   const [text, setText] = useState('')
+  const [fileName, setFileName] = useState('')
   const [selectedAgent, setSelectedAgent] = useState('completa')
-  const [result, setResult] = useState('')
+  const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
+  const [allResults, setAllResults] = useState(null)
   const [error, setError] = useState('')
+  const [followUp, setFollowUp] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [history, setHistory] = useState([])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(HISTORY_KEY)
+      if (stored) setHistory(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  const persist = useCallback((updated) => {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(updated)) } catch {}
+  }, [])
+
+  const saveToHistory = useCallback((entry) => {
+    setHistory(prev => {
+      const updated = [entry, ...prev].slice(0, 30)
+      persist(updated)
+      return updated
+    })
+  }, [persist])
 
   const handleAnalyze = async () => {
     if (!text.trim() || loading) return
+    setError('')
+    setMessages([])
+    setAllResults(null)
 
+    const userContent = `Analise a seguinte peticao:\n\n${text}`
+
+    if (selectedAgent === 'todos') {
+      const initial = {}
+      ALL_MODES.forEach(m => { initial[m] = { loading: true, result: '', error: '' } })
+      setAllResults({ ...initial })
+
+      await Promise.allSettled(
+        ALL_MODES.map(async (mode) => {
+          try {
+            const result = await callApi([{ role: 'user', content: userContent }], mode)
+            setAllResults(prev => ({ ...prev, [mode]: { loading: false, result, error: '' } }))
+          } catch (err) {
+            setAllResults(prev => ({ ...prev, [mode]: { loading: false, result: '', error: err.message } }))
+          }
+        })
+      )
+
+      saveToHistory({
+        id: genId(),
+        timestamp: new Date().toISOString(),
+        mode: 'todos',
+        fileName: fileName || null,
+        excerpt: text.slice(0, 120),
+        messages: [],
+        allResults: null,
+      })
+    } else {
+      setLoading(true)
+      try {
+        const result = await callApi([{ role: 'user', content: userContent }], selectedAgent)
+        const newMessages = [
+          { role: 'user', content: userContent, timestamp: new Date().toISOString() },
+          { role: 'assistant', content: result, timestamp: new Date().toISOString() },
+        ]
+        setMessages(newMessages)
+        saveToHistory({
+          id: genId(),
+          timestamp: new Date().toISOString(),
+          mode: selectedAgent,
+          fileName: fileName || null,
+          excerpt: text.slice(0, 120),
+          messages: newMessages,
+          allResults: null,
+        })
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
+  const handleFollowUp = async () => {
+    if (!followUp.trim() || loading) return
+    const userMsg = { role: 'user', content: followUp, timestamp: new Date().toISOString() }
+    const optimistic = [...messages, userMsg]
+    setMessages(optimistic)
+    setFollowUp('')
     setLoading(true)
     setError('')
-    setResult('')
-
     try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, mode: selectedAgent }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao processar analise')
-      }
-
-      setResult(data.result)
+      const apiMessages = optimistic.map(m => ({ role: m.role, content: m.content }))
+      const result = await callApi(apiMessages, selectedAgent)
+      setMessages(prev => [...prev, { role: 'assistant', content: result, timestamp: new Date().toISOString() }])
     } catch (err) {
       setError(err.message)
+      setMessages(prev => prev.slice(0, -1))
     } finally {
       setLoading(false)
     }
   }
 
-  const canAnalyze = text.trim().length > 0 && !loading
+  const handleLoadHistory = (entry) => {
+    setText(entry.excerpt || '')
+    setSelectedAgent(entry.mode === 'todos' ? 'completa' : entry.mode)
+    setMessages(entry.messages || [])
+    setAllResults(entry.allResults || null)
+    setFileName(entry.fileName || '')
+    setError('')
+    setSidebarOpen(false)
+  }
+
+  const handleDeleteHistory = (id) => {
+    setHistory(prev => {
+      const updated = prev.filter(e => e.id !== id)
+      persist(updated)
+      return updated
+    })
+  }
+
+  const handleClearAll = () => {
+    setHistory([])
+    try { localStorage.removeItem(HISTORY_KEY) } catch {}
+  }
+
+  const handleNewSession = () => {
+    setText('')
+    setFileName('')
+    setMessages([])
+    setAllResults(null)
+    setError('')
+    setFollowUp('')
+  }
+
+  const hasResults = messages.length > 0 || allResults !== null
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header />
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-100">
+      <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(o => !o)} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Left column */}
-          <div className="space-y-5">
-            <TextInput text={text} setText={setText} />
-            <AgentSelector selected={selectedAgent} onSelect={setSelectedAgent} />
+      <div className="flex-1 flex overflow-hidden relative">
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black/40 z-30 xl:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
 
-            <button
-              onClick={handleAnalyze}
-              disabled={!canAnalyze}
-              className="w-full py-4 px-6 bg-blue-900 hover:bg-blue-800 active:bg-blue-950 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-base transition-all duration-200 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center justify-center gap-3"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Analisando peticao...
-                </>
-              ) : (
-                <>
-                  <Scale size={20} />
-                  Analisar Peticao
-                </>
-              )}
-            </button>
+        <HistorySidebar
+          open={sidebarOpen}
+          history={history}
+          onLoad={handleLoadHistory}
+          onDelete={handleDeleteHistory}
+          onClearAll={handleClearAll}
+        />
+
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto p-4 md:p-5">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+              {/* Left: input */}
+              <div className="space-y-4">
+                <FileUpload
+                  text={text}
+                  setText={setText}
+                  fileName={fileName}
+                  setFileName={setFileName}
+                />
+                <AgentSelector selected={selectedAgent} onSelect={setSelectedAgent} />
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={loading || !text.trim()}
+                    className="flex-1 py-3.5 px-5 bg-blue-900 hover:bg-blue-800 active:bg-blue-950 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  >
+                    {loading && selectedAgent !== 'todos' ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Analisando...
+                      </>
+                    ) : (
+                      <>
+                        <Scale size={15} />
+                        {selectedAgent === 'todos' ? 'Executar Todos os Agentes' : 'Analisar Peticao'}
+                      </>
+                    )}
+                  </button>
+                  {hasResults && (
+                    <button
+                      onClick={handleNewSession}
+                      className="px-4 py-3.5 border-2 border-slate-300 text-slate-600 hover:bg-white hover:border-slate-400 rounded-xl text-sm font-medium transition-colors bg-white"
+                    >
+                      + Nova
+                    </button>
+                  )}
+                </div>
+
+                {error && (
+                  <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
+              </div>
+
+              {/* Right: results */}
+              <div className="space-y-4">
+                <ConversationView
+                  messages={messages}
+                  allResults={allResults}
+                  loading={loading}
+                  selectedAgent={selectedAgent}
+                />
+                {messages.length >= 2 && (
+                  <FollowUpInput
+                    value={followUp}
+                    onChange={setFollowUp}
+                    onSubmit={handleFollowUp}
+                    loading={loading}
+                  />
+                )}
+              </div>
+            </div>
           </div>
-
-          {/* Right column */}
-          <div>
-            <AnalysisResult result={result} loading={loading} error={error} />
-          </div>
-        </div>
-      </main>
-
-      <footer className="mt-16 pb-8 text-center">
-        <p className="text-xs text-slate-400">
-          Analisador Juridico IA &middot; Powered by Claude Sonnet &middot; Bentes Ramos Advocacia
-        </p>
-      </footer>
+        </main>
+      </div>
     </div>
   )
 }

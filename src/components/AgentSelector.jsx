@@ -1,4 +1,5 @@
 import {
+  Zap,
   BarChart3,
   FileText,
   BookOpen,
@@ -6,16 +7,52 @@ import {
   ClipboardList,
   SpellCheck,
   PenLine,
+  ShieldAlert,
 } from 'lucide-react'
+
+export const AGENT_META = {
+  todos: { title: 'Todos os Agentes', Icon: Zap, color: 'amber', badge: 'bg-amber-100 text-amber-800' },
+  completa: { title: 'Analise Completa', Icon: BarChart3, color: 'blue', badge: 'bg-blue-100 text-blue-800' },
+  fatos: { title: 'Fatos e Narrativa', Icon: FileText, color: 'purple', badge: 'bg-purple-100 text-purple-800' },
+  fundamentos: { title: 'Fundamentos', Icon: BookOpen, color: 'indigo', badge: 'bg-indigo-100 text-indigo-800' },
+  jurisprudencia: { title: 'Jurisprudencia', Icon: Landmark, color: 'teal', badge: 'bg-teal-100 text-teal-800' },
+  pedidos: { title: 'Pedidos', Icon: ClipboardList, color: 'green', badge: 'bg-green-100 text-green-800' },
+  ortografia: { title: 'Ortografia', Icon: SpellCheck, color: 'orange', badge: 'bg-orange-100 text-orange-800' },
+  redacao: { title: 'Redacao', Icon: PenLine, color: 'rose', badge: 'bg-rose-100 text-rose-800' },
+  qa_bancario: { title: 'QA Bancario', Icon: ShieldAlert, color: 'red', badge: 'bg-red-100 text-red-800' },
+}
 
 const AGENTS = [
   {
+    id: 'todos',
+    title: 'Todos os Agentes',
+    description: 'Executa todos os 8 agentes em paralelo',
+    Icon: Zap,
+    special: true,
+    ring: 'ring-amber-400',
+    bg: 'bg-amber-50 border-amber-400',
+    iconBg: 'bg-amber-100',
+    iconColor: 'text-amber-700',
+    badge: 'bg-amber-100 text-amber-800',
+  },
+  {
+    id: 'qa_bancario',
+    title: 'QA Bancario',
+    description: 'Auditoria tecnica: fraudes PIX, emprestimos e direito bancario',
+    Icon: ShieldAlert,
+    ring: 'ring-red-400',
+    bg: 'bg-red-50 border-red-400',
+    iconBg: 'bg-red-100',
+    iconColor: 'text-red-700',
+    badge: 'bg-red-100 text-red-800',
+  },
+  {
     id: 'completa',
     title: 'Analise Completa',
-    description: 'Analise geral: estrutura, fatos, fundamentos, pedidos e redacao',
+    description: 'Analise geral de toda a peticao',
     Icon: BarChart3,
-    selectedBorder: 'border-blue-500',
-    selectedBg: 'bg-blue-50',
+    ring: 'ring-blue-400',
+    bg: 'bg-blue-50 border-blue-400',
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-700',
     badge: 'bg-blue-100 text-blue-800',
@@ -23,10 +60,10 @@ const AGENTS = [
   {
     id: 'fatos',
     title: 'Fatos e Narrativa',
-    description: 'Clareza, cronologia e relevancia juridica dos fatos narrados',
+    description: 'Clareza e relevancia dos fatos',
     Icon: FileText,
-    selectedBorder: 'border-purple-500',
-    selectedBg: 'bg-purple-50',
+    ring: 'ring-purple-400',
+    bg: 'bg-purple-50 border-purple-400',
     iconBg: 'bg-purple-100',
     iconColor: 'text-purple-700',
     badge: 'bg-purple-100 text-purple-800',
@@ -34,10 +71,10 @@ const AGENTS = [
   {
     id: 'fundamentos',
     title: 'Fundamentos Juridicos',
-    description: 'Analise das normas, argumentacao e embasamento legal',
+    description: 'Normas, argumentacao e doutrina',
     Icon: BookOpen,
-    selectedBorder: 'border-indigo-500',
-    selectedBg: 'bg-indigo-50',
+    ring: 'ring-indigo-400',
+    bg: 'bg-indigo-50 border-indigo-400',
     iconBg: 'bg-indigo-100',
     iconColor: 'text-indigo-700',
     badge: 'bg-indigo-100 text-indigo-800',
@@ -45,10 +82,10 @@ const AGENTS = [
   {
     id: 'jurisprudencia',
     title: 'Jurisprudencia',
-    description: 'Avaliacao e sugestao de precedentes do STF, STJ e tribunais',
+    description: 'STF, STJ, sumulas e precedentes',
     Icon: Landmark,
-    selectedBorder: 'border-teal-500',
-    selectedBg: 'bg-teal-50',
+    ring: 'ring-teal-400',
+    bg: 'bg-teal-50 border-teal-400',
     iconBg: 'bg-teal-100',
     iconColor: 'text-teal-700',
     badge: 'bg-teal-100 text-teal-800',
@@ -56,21 +93,21 @@ const AGENTS = [
   {
     id: 'pedidos',
     title: 'Pedidos',
-    description: 'Clareza, completude e adequacao tecnica dos requerimentos',
+    description: 'Clareza e completude dos requerimentos',
     Icon: ClipboardList,
-    selectedBorder: 'border-green-500',
-    selectedBg: 'bg-green-50',
+    ring: 'ring-green-400',
+    bg: 'bg-green-50 border-green-400',
     iconBg: 'bg-green-100',
     iconColor: 'text-green-700',
     badge: 'bg-green-100 text-green-800',
   },
   {
     id: 'ortografia',
-    title: 'Correcao Ortografica',
-    description: 'Revisao completa de ortografia, gramatica e pontuacao',
+    title: 'Ortografia',
+    description: 'Revisao gramatical e ortografica',
     Icon: SpellCheck,
-    selectedBorder: 'border-orange-500',
-    selectedBg: 'bg-orange-50',
+    ring: 'ring-orange-400',
+    bg: 'bg-orange-50 border-orange-400',
     iconBg: 'bg-orange-100',
     iconColor: 'text-orange-700',
     badge: 'bg-orange-100 text-orange-800',
@@ -78,10 +115,10 @@ const AGENTS = [
   {
     id: 'redacao',
     title: 'Melhoria da Redacao',
-    description: 'Clareza, coesao, persuasividade e estilo juridico',
+    description: 'Clareza, coesao e estilo juridico',
     Icon: PenLine,
-    selectedBorder: 'border-rose-500',
-    selectedBg: 'bg-rose-50',
+    ring: 'ring-rose-400',
+    bg: 'bg-rose-50 border-rose-400',
     iconBg: 'bg-rose-100',
     iconColor: 'text-rose-700',
     badge: 'bg-rose-100 text-rose-800',
@@ -90,39 +127,27 @@ const AGENTS = [
 
 export default function AgentSelector({ selected, onSelect }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-      <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">
-        Tipo de Analise
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Agente de Analise</p>
+      <div className="grid grid-cols-3 gap-2">
         {AGENTS.map((agent) => {
           const isSelected = selected === agent.id
           return (
             <button
               key={agent.id}
               onClick={() => onSelect(agent.id)}
-              className={`text-left p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+              className={`text-left p-2.5 rounded-xl border-2 transition-all duration-150 group ${
                 isSelected
-                  ? `${agent.selectedBorder} ${agent.selectedBg} shadow-sm`
+                  ? `${agent.bg} shadow-sm`
                   : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
-              }`}
+              } ${agent.special && !isSelected ? 'border-dashed border-amber-300' : ''}`}
             >
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${agent.iconBg}`}>
-                  <agent.Icon size={18} className={agent.iconColor} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-slate-800 text-sm">{agent.title}</span>
-                    {isSelected && (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${agent.badge}`}>
-                        Ativo
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{agent.description}</p>
-                </div>
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-1.5 ${isSelected ? agent.iconBg : 'bg-slate-200 group-hover:' + agent.iconBg}`}>
+                <agent.Icon size={14} className={isSelected ? agent.iconColor : 'text-slate-500'} />
               </div>
+              <p className={`text-xs font-semibold leading-tight ${isSelected ? 'text-slate-800' : 'text-slate-600'}`}>
+                {agent.title}
+              </p>
             </button>
           )
         })}
